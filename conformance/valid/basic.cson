@@ -1,0 +1,5 @@
+# a basic CSON document
+name: "avalanche"
+port: 8080
+enabled: true
+extra: null

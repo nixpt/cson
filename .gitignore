@@ -12,3 +12,23 @@
 .dejavue/embeddings.jsonl
 .dejavue/embedder_circuit.json
 .dejavue/timeline.jsonl.bak-*
+
+# ── .jagent/ — repo-local agent surface (workspace-meta plan 2026-09-18) ─────
+# Runner-native dirs are LOCAL runtime; committed config lives in .jagent/agents/.
+.claude/
+.codex/
+.cursor/
+.opencode/
+
+# .jagent local surfaces — never travel
+.jagent/sessions/
+.jagent/local/
+.jagent/tmp/
+.jagent/sync/
+.jagent/worktrees/
+.jagent/knowledge/
+.jagent/*.db*
+.jagent/*.lock
+.jagent/*.sock
+.jagent/cache/
+.jagent/mcp/
