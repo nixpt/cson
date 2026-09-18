@@ -4,6 +4,10 @@
 .jagent/worktrees/
 
 # dejavue: local-only artifacts
+# The vendored tool copy does not travel — dejavue resolves via PATH or the
+# fleet jagent-dejavue wrapper (see CLAUDE.md). Ignored so a stray `dejavue init`
+# cannot re-commit 5k lines.
+.dejavue/dejavue.py
 .dejavue/fts.db
 .dejavue/*.tmp
 .dejavue/.first-use
