@@ -40,3 +40,15 @@ SPEC 8 promises that parsers do not diverge from the corpus. 'Each implementatio
 Outcome:
 11/11 vectors: corpus(rust) == python == javascript.
 
+
+## 2026-09-20T00:28:45-05:00 — [STRATEGIC] [ADOPTED] Round-trip is defined at the NODE level, not the byte level
+
+Reason:
+The printer cannot recover comments (the parser discards them), and SPEC 2.4 makes [section] sugar equivalent to nesting, so a byte-identical round trip is impossible by construction. Defining the property as 'the projection is unchanged' keeps it meaningful and testable: values, confidence, annotations, semantic keys and version survive; comments, section sugar, key order and bare-vs-quoted key choice do not.
+
+Rejected alternatives:
+- **byte-identical round trip**
+
+Outcome:
+11/11 vectors round-trip through the Rust printer with identical meaning in all four implementations.
+

@@ -13,6 +13,9 @@ pub use parser::CsonParser;
 
 pub mod project;
 pub use project::ProjectError;
+
+pub mod print;
+pub use print::{print_document, print_node};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

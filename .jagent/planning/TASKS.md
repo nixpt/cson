@@ -33,7 +33,10 @@ Every open item below represents a planned task or issue. See
 - [x] **CSON-5** — a second-language parser as proof the spec travels.
   Python landed at `impl/python/` (dependency-free, 16/16 conformance + 38/38 spec
   checks). It proved the spec travels *and* found two reference-parser bugs.
-- [ ] **CSON-6** — print → parse round-trip corpus. Blocked on CSON-9 (no printer yet).
+- [x] **CSON-6** — round-trip verified, and cross-language: the cross-check now has
+  the Rust printer emit each vector, then asserts ALL FOUR implementations parse the
+  printed form to the same meaning. Not a separate corpus of printed files — the
+  property is checked against the existing vectors, so it cannot drift from them.
 
 ## P3 — more languages, now that the contract is settled
 
@@ -43,12 +46,18 @@ Every open item below represents a planned task or issue. See
 - [x] **CSON-8** — Go parser: `impl/go/`, stdlib only. 16/16 conformance + 14 spec
   tests (30 subtests). `Confidence *float64` so absent stays distinguishable from
   `~1.0`; `*Object` preserves key order for a future printer.
-- [ ] **CSON-9** — a CSON printer. Every implementation parses only today, so §6's
-  "reconstructable from its projection plus the printer" is unverifiable.
+- [x] **CSON-9** — CSON printer in the Rust reference (`src/print.rs`), making §6's
+  reconstructability claim checkable. Round-trip is at the NODE level: comments,
+  `[section]` sugar, key order and bare-vs-quoted choice are deliberately not
+  preserved; values, confidence, annotations, semantic keys and version are.
+  Printers for the other implementations remain open (see CSON-11).
 - [x] **CSON-10** — `.github/workflows/conformance.yml`: a job per implementation
   plus a `cross-check` job asserting all four project identically.
   `CSON_CROSSCHECK_REQUIRE` makes a missing toolchain a hard failure instead of a
   silently narrower comparison.
+
+- [ ] **CSON-11** — printers for Python, JavaScript and Go. Rust has one; the others
+  parse only. Needed before any of them can emit CSON rather than just consume it.
 
 ## Non-goals
 
