@@ -27,9 +27,11 @@ Every open item below represents a planned task or issue. See
 
 - [ ] **CSON-2** — full conformance vector set covering every grammar
   production + edge cases; document the per-language runner contract.
-  *Advanced:* +3 vectors (`confidence_absent_vs_one`, `array_metadata`,
-  `nested_metadata`); corpus now 11 valid + 5 invalid. Still wants full production
-  coverage and fuzz-found edges.
+  *Advanced:* corpus now **12 valid + 8 invalid**. Added `confidence_absent_vs_one`,
+  `array_metadata`, `nested_metadata`, `metadata_order`, `duplicate_confidence`,
+  `confidence_out_of_range`, `confidence_negative`. Each of the last four was added
+  because a real divergence was found there first — the corpus is still trailing the
+  spec text, not leading it. Still wants full production coverage and fuzz-found edges.
 - [x] **CSON-5** — a second-language parser as proof the spec travels.
   Python landed at `impl/python/` (dependency-free, 16/16 conformance + 38/38 spec
   checks). It proved the spec travels *and* found two reference-parser bugs.
