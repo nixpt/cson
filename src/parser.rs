@@ -96,6 +96,9 @@ impl<'a> CsonParser<'a> {
                     } else if let Some(ref arg) = ann.args {
                         document_version = arg.trim_matches('"').to_string();
                     }
+                    // `@cson` is reserved for document metadata (SPEC §2.5): it
+                    // sets the version and does NOT attach to the next node.
+                    continue;
                 }
                 pending_annotations.push(ann);
                 continue;
@@ -291,6 +294,25 @@ impl<'a> CsonParser<'a> {
         )))
     }
 
+    /// Consume any annotations trailing a value, e.g. `"x" @note @wip { a: "b" }`.
+    /// A node is `value confidence? annotation*` (SPEC §3), and that applies to
+    /// array elements as much as to object values.
+    fn parse_trailing_annotations(&mut self) -> Result<Vec<CsonAnnotation>, String> {
+        let mut out = Vec::new();
+        loop {
+            let save = self.pos;
+            self.skip_whitespace_and_comments();
+            if self.pos < self.input.len() && self.input[self.pos..].starts_with('@')
+                && !self.input[self.pos..].starts_with("@synthesize")
+            {
+                out.push(self.parse_annotation()?);
+            } else {
+                self.pos = save;
+                return Ok(out);
+            }
+        }
+    }
+
     fn parse_value(&mut self) -> Result<(CsonValue, Option<f64>), String> {
         self.skip_whitespace_and_comments();
         if self.pos >= self.input.len() {
@@ -377,10 +399,11 @@ impl<'a> CsonParser<'a> {
                     break;
                 }
                 let (v, c) = self.parse_value()?;
+                let anns = self.parse_trailing_annotations()?;
                 arr.push(CsonNode {
                     value: v,
                     confidence: c,
-                    annotations: vec![],
+                    annotations: anns,
                 });
                 self.skip_whitespace_and_comments();
                 if self.pos < self.input.len() && self.input[self.pos..].starts_with(',') {

@@ -1,0 +1,2 @@
+# Metadata inside a nested object recurses the same way.
+server: { host: "localhost" ~0.9, port: 8080 }

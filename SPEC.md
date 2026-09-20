@@ -184,24 +184,57 @@ Comments (`# … EOL`) may appear anywhere whitespace is allowed.
 
 ## 6. JSON projection
 
-Every CSON document maps to JSON so existing tooling can consume it:
+Every CSON document maps to JSON so existing tooling can consume it.
 
-- **Node value** → its JSON equivalent. Objects recurse; arrays recurse.
-- **Confidence** → a sibling key `"<key>$confidence": 0.95`, omitted when absent.
-- **Annotations** → a sibling key `"<key>$annotations": [ { "name": …, "args": …, "properties": … } ]`, omitted when empty.
-- **Semantic key** → the key's text, verbatim (the `~` is not part of the data).
-- **Synthesized value** → `{ "$synthesize": "the description" }` (an object, so
-  it is never confused with a literal string).
+**The rule is one sentence:** a node with no metadata projects to its bare value;
+a node carrying confidence or annotations projects to a **wrapper object**.
 
-The projection is **lossy in syntax, lossless in meaning**: a CSON parser can
-reconstruct a document from its projection plus the CSON printer.
+```json
+{ "$value": <the projected value>,
+  "$confidence": 0.95,                     // omitted when unstated
+  "$annotations": [ { "name": …, "args": …, "properties": {…} } ] }   // omitted when empty
+```
 
-> The Rust reference parser's `to_json` / `from_json` implement this projection
-> today for values and annotations; the `$confidence` / `$annotations` sibling
-> convention above is the specified target shape and is tracked as a
-> conformance item (see `conformance/`).
+- **Value** → its JSON equivalent. Objects recurse; arrays recurse.
+- **Semantic key** → the key's text, verbatim (the `~` is syntax, not data).
+- **Synthesized value** → `{ "$synthesize": "the description" }`.
+- **Keys beginning with `$` are reserved** at the top level of a projected object.
+  A CSON document must not use them as bare keys; a parser projecting one is an error.
 
----
+```cson
+name: "avalanche"                  # no metadata
+temperature: 21.5 ~0.8
+tags: [1 ~0.5, 2]
+port: 8080 @wip { owner: "foreman" }
+```
+
+```json
+{
+  "name": "avalanche",
+  "temperature": { "$value": 21.5, "$confidence": 0.8 },
+  "tags": [ { "$value": 1.0, "$confidence": 0.5 }, 2.0 ],
+  "port": { "$value": 8080.0,
+            "$annotations": [ { "name": "wip", "args": null,
+                                "properties": { "owner": "foreman" } } ] }
+}
+```
+
+Because the wrapper is keyed on the node rather than on its parent's key, it
+applies **identically to object values and array elements** — an array element is
+a node (§5) and may carry metadata like any other.
+
+The projection is **lossless in meaning**: `$confidence` is present only when
+stated, so an absent confidence and an explicit `~1.0` remain distinguishable in
+the projection, as §4.2 requires. A document can therefore be reconstructed from
+its projection plus the CSON printer (syntax — comments, section sugar, key order
+— is not preserved).
+
+> **Why a wrapper and not sibling keys.** An earlier draft specified
+> `"<key>$confidence"` siblings. That form cannot express metadata on an array
+> element (there is no key to hang a sibling from), and a document containing a
+> literal `t$confidence` key collides with the projection of `t: … ~…`. The
+> wrapper has neither problem and matches the precedent `$synthesize` already
+> sets: a distinguishing object, never a bare value.
 
 ## 7. Errors
 

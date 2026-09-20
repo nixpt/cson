@@ -6,7 +6,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use cson::{CsonParser, CsonValue};
+use cson::CsonParser;
 
 fn conformance_dir() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("conformance")
@@ -78,37 +78,9 @@ fn canon_value(v: &serde_json::Value) -> String {
 
 /// Project a CSON document to the SPEC §6 JSON shape the corpus expects.
 fn project(doc: &cson::CsonDocument) -> serde_json::Value {
-    node_to_json_project(&doc.root)
-}
-
-fn node_to_json_project(node: &cson::CsonNode) -> serde_json::Value {
-    match &node.value {
-        CsonValue::String(s) => serde_json::Value::String(s.clone()),
-        CsonValue::Number(n) => serde_json::Number::from_f64(*n)
-            .map(serde_json::Value::Number)
-            .unwrap_or(serde_json::Value::Null),
-        CsonValue::Boolean(b) => serde_json::Value::Bool(*b),
-        CsonValue::Null => serde_json::Value::Null,
-        CsonValue::Synthesize(s) => {
-            let mut m = serde_json::Map::new();
-            m.insert("$synthesize".into(), serde_json::Value::String(s.clone()));
-            serde_json::Value::Object(m)
-        }
-        CsonValue::Array(items) => {
-            serde_json::Value::Array(items.iter().map(node_to_json_project).collect())
-        }
-        CsonValue::Object(map) => {
-            let mut out = serde_json::Map::new();
-            for (k, v) in map {
-                // SPEC §6: a semantic key projects to its bare intent text — the
-                // `~` marker is syntax, not data. (The internal map key keeps the
-                // marker so the printer can round-trip it.)
-                let key = k.strip_prefix('~').unwrap_or(k);
-                out.insert(key.to_string(), node_to_json_project(v));
-            }
-            serde_json::Value::Object(out)
-        }
-    }
+    // SPEC §6 lives in the library now (src/project.rs), not in this harness, so
+    // the corpus tests exactly what callers get.
+    doc.project().expect("document projects")
 }
 
 #[test]
