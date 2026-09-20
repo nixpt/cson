@@ -27,10 +27,11 @@ function canon(v) {
   return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canon(v[k])}`).join(",")}}`;
 }
 
-const pyAvailable = (() => {
-  try { execFileSync("python3", ["-c", "import sys"], { stdio: "ignore" }); return true; }
-  catch { return false; }
-})();
+const have = (cmd, args) => {
+  try { execFileSync(cmd, args, { stdio: "ignore" }); return true; } catch { return false; }
+};
+const pyAvailable = have("python3", ["-c", "import sys"]);
+const goAvailable = have("go", ["version"]);
 
 let ok = 0;
 const failures = [];
@@ -50,6 +51,12 @@ for (const f of readdirSync(join(CORPUS, "valid")).filter((f) => f.endsWith(".cs
     shapes.python = canon(JSON.parse(out));
   }
 
+  if (goAvailable) {
+    const out = execFileSync("go", ["run", "./cmd/project", join(CORPUS, "valid", f)],
+      { cwd: join(ROOT, "impl", "go"), encoding: "utf8" });
+    shapes.go = canon(JSON.parse(out));
+  }
+
   const distinct = new Set(Object.values(shapes));
   if (distinct.size === 1) ok++;
   else failures.push(`${f}: implementations disagree\n` +
@@ -57,6 +64,7 @@ for (const f of readdirSync(join(CORPUS, "valid")).filter((f) => f.endsWith(".cs
 }
 
 for (const f of failures) console.log(`  FAIL ${f}`);
-const impls = pyAvailable ? "corpus(rust) == python == javascript" : "corpus(rust) == javascript";
+const impls = ["corpus(rust)", "javascript",
+  ...(pyAvailable ? ["python"] : []), ...(goAvailable ? ["go"] : [])].join(" == ");
 console.log(`\n${ok}/${ok + failures.length} vectors: ${impls}`);
 process.exit(failures.length ? 1 : 0);
