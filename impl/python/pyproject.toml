@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cson"
+version = "0.1.0"
+description = "CSON (Crush Semantic Object Notation) parser — JSON shape with confidence, semantic keys, annotations and synthesized values"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT OR Apache-2.0" }
+keywords = ["cson", "parser", "configuration", "serialization", "agents"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Topic :: Software Development :: Libraries",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/nixpt/cson"
+Specification = "https://github.com/nixpt/cson/blob/main/SPEC.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["cson"]
