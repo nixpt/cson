@@ -31,3 +31,12 @@ The conformance corpus is the contract (SPEC 8). Keeping parsers beside it means
 Rejected alternatives:
 - **separate cson-py / cson-js repos**
 
+
+## 2026-09-20T00:11:39-05:00 — [TACTICAL] [ADOPTED] Every implementation must be cross-checked against the others, not only against its own expectations
+
+Reason:
+SPEC 8 promises that parsers do not diverge from the corpus. 'Each implementation passes its own tests' is a weaker claim than 'all implementations agree' -- two parsers can each be self-consistent and still disagree. At three implementations this stops being checkable by hand, so impl/js/test/cross-check.mjs asserts Rust, Python and JavaScript project identically for every vector.
+
+Outcome:
+11/11 vectors: corpus(rust) == python == javascript.
+

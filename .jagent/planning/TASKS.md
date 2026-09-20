@@ -37,7 +37,9 @@ Every open item below represents a planned task or issue. See
 
 ## P3 — more languages, now that the contract is settled
 
-- [ ] **CSON-7** — JavaScript/TypeScript parser under `impl/js/`.
+- [x] **CSON-7** — JavaScript/TypeScript parser: `impl/js/`, dependency-free, no build
+  step, hand-written `.d.ts`. 16/16 conformance + 36/36 spec checks. Also added
+  `test/cross-check.mjs`, which asserts all three implementations project identically.
 - [ ] **CSON-8** — Go parser under `impl/go/`.
 - [ ] **CSON-9** — a CSON printer. Every implementation parses only today, so §6's
   "reconstructable from its projection plus the printer" is unverifiable.
