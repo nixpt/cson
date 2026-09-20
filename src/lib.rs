@@ -10,6 +10,9 @@
 
 pub mod parser;
 pub use parser::CsonParser;
+
+pub mod project;
+pub use project::ProjectError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

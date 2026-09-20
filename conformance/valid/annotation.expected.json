@@ -1,1 +1,1 @@
-{"port":8080.0,"host":"localhost"}
+{"port":{"$value":8080.0,"$annotations":[{"name":"wip","args":null,"properties":{"owner":"foreman"}}]},"host":{"$value":"localhost","$annotations":[{"name":"temporary","args":null,"properties":{}}]}}

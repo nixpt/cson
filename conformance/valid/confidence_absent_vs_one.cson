@@ -1,0 +1,4 @@
+# SPEC §4.2: absent confidence is "no claim", NOT 1.0. The two must stay
+# distinguishable -- including in the projection.
+unstated: 1
+certain: 1 ~1.0
