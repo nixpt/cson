@@ -1,0 +1,18 @@
+{
+  "name": "cson-parser",
+  "version": "0.1.0",
+  "description": "CSON (Crush Semantic Object Notation) parser — JSON shape with confidence, semantic keys, annotations and synthesized values",
+  "type": "module",
+  "main": "./src/index.mjs",
+  "types": "./src/index.d.ts",
+  "exports": { ".": { "types": "./src/index.d.ts", "default": "./src/index.mjs" } },
+  "files": ["src"],
+  "scripts": {
+    "test": "node test/conformance.mjs && node test/spec.mjs && node test/cross-check.mjs"
+  },
+  "keywords": ["cson", "parser", "configuration", "serialization", "agents"],
+  "license": "MIT OR Apache-2.0",
+  "repository": { "type": "git", "url": "https://github.com/nixpt/cson.git", "directory": "impl/js" },
+  "engines": { "node": ">=18" },
+  "dependencies": {}
+}
