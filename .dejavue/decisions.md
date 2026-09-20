@@ -52,3 +52,15 @@ Rejected alternatives:
 Outcome:
 11/11 vectors round-trip through the Rust printer with identical meaning in all four implementations.
 
+
+## 2026-09-20T00:39:41-05:00 — [STRATEGIC] [ADOPTED] Node metadata order is FREE: confidence and annotations may interleave
+
+Reason:
+The old grammar (node = value {confidence} {annotation}) forced confidence first. Nothing is gained by that ordering -- both are node metadata -- and it was a real trap: cson-corpus hit it and documented a 'write spec order' workaround. Three of four implementations already accepted either order; only Rust did not. Relaxing makes the majority correct and removes the trap. Purely additive: no previously-valid document changes meaning, so the format stays 1.0.
+
+Rejected alternatives:
+- **enforce confidence-then-annotations strictly in all four parsers**
+
+Outcome:
+A node still carries at most ONE confidence; a second is now an explicit error in all four (it used to be rejected accidentally with a misleading 'semantic key' message).
+

@@ -1,0 +1,6 @@
+# SPEC §3: metadata order is free — confidence and annotations may interleave.
+# `v ~0.9 @wip` and `v @wip ~0.9` are the same node.
+spec_order: 1 ~0.5 @note
+reversed: 2 @note ~0.5
+interleaved: 3 @a ~0.5 @b
+final_pair_reversed: 4 @note ~0.5

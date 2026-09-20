@@ -208,7 +208,12 @@ def _parse_node(c: _Cursor, pending: list) -> Node:
     while True:
         save = c.i
         c.skip_ws(newlines=False)
-        if c.peek() == "~" and conf is None:
+        if c.peek() == "~":
+            # A node carries at most one confidence (SPEC §3). Without this the
+            # second `~` falls through to key parsing and reports a misleading
+            # "semantic key" error.
+            if conf is not None:
+                raise c.err("Duplicate confidence on a node")
             at = c.i
             c.i += 1
             c.skip_ws(newlines=False)

@@ -92,11 +92,16 @@ Absent, the version is `1.0`.
 A **node** is a value plus optional metadata:
 
 ```
-node      := value (confidence)? (annotation)*
+node      := value (confidence | annotation)*
 value     := string | number | boolean | null | object | array | synthesize
-confidence:= "~" number          # 0.0 … 1.0
+confidence:= "~" number          # 0.0 … 1.0, at most once per node
 annotation:= "@" name ( "(" args ")" )? ( "{" props "}" )?
 ```
+
+**Metadata order is free.** `v ~0.9 @wip` and `v @wip ~0.9` are the same node.
+Confidence and annotations are both node metadata and ordering them carries no
+meaning, so a parser must accept either. A node may carry **at most one**
+confidence; a second is an error.
 
 This is the unit of the format: unlike JSON, a *value* and its metadata travel
 together. A parser produces a tree of nodes rooted in a document object.
@@ -166,7 +171,7 @@ semantic_key = "~" ws quoted_string ;
 quoted_key   = quoted_string ;
 bare_key     = { ? any char except ':' and newline ? } ;
 
-node         = value { ws "~" ws number } { ws annotation } ;
+node         = value { ws ( "~" ws number | annotation ) } ;   (* order is free; at most one confidence *)
 value        = string | number | boolean | null | object | array | synthesize ;
 object       = "{" ws [ pair { ws "," ws pair } [ ws "," ] ws ] "}" ;
 array        = "[" ws [ node { ws "," ws node } [ ws "," ] ws ] "]" ;
@@ -243,6 +248,7 @@ A conforming parser must reject, with a positional message:
 - an unclosed object, array, annotation, section, or string;
 - a duplicate key;
 - a confidence outside `[0.0, 1.0]`;
+- more than one confidence on a single node;
 - a key with no following `:`;
 - a malformed annotation property.
 

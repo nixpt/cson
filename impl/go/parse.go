@@ -74,7 +74,13 @@ func (c *cursor) parseNode(pending []Annotation) (*Node, *Error) {
 	for {
 		save := c.i
 		c.skipWS(false)
-		if c.peek() == '~' && n.Confidence == nil {
+		if c.peek() == '~' {
+			// A node carries at most one confidence (SPEC §3). Without this the
+			// second `~` falls through to key parsing and reports a misleading
+			// "semantic key" error.
+			if n.Confidence != nil {
+				return nil, c.err("Duplicate confidence on a node")
+			}
 			at := c.i
 			c.i++
 			c.skipWS(false)

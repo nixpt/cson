@@ -269,18 +269,34 @@ impl<'a> CsonParser<'a> {
 
         self.skip_whitespace_and_comments();
 
-        let (value, confidence) = self.parse_value()?;
+        let (value, mut confidence) = self.parse_value()?;
 
-        // Suffix annotations: `port: 8080 @wip { owner: "foreman" }` (SPEC §3/§4.3).
-        // A `~` here is a *confidence*, consumed by parse_value, so only `@` starts
-        // an annotation.
+        // SPEC §3: metadata order is FREE — `v ~0.9 @wip` and `v @wip ~0.9` are the
+        // same node, so confidence and annotations may interleave. parse_value
+        // consumes a confidence directly after the value; one appearing after an
+        // annotation is picked up here.
+        //
+        // Previously this loop took only `@`, so a later `~` was left unconsumed and
+        // the next pair's `find(':')` swallowed it — `a: 1 @note ~0.5\nb: 2` parsed
+        // to a bogus key "0.5\nb". Silent corruption, not a clean error.
         let mut annotations = Vec::new();
         loop {
             self.skip_whitespace_and_comments();
-            if self.pos < self.input.len() && self.input[self.pos..].starts_with('@') {
-                annotations.push(self.parse_annotation()?);
-            } else {
+            if self.pos >= self.input.len() {
                 break;
+            }
+            if self.input[self.pos..].starts_with('@') {
+                annotations.push(self.parse_annotation()?);
+                continue;
+            }
+            match self.parse_confidence()? {
+                Some(c) => {
+                    if confidence.is_some() {
+                        return Err(self.error("Duplicate confidence on a node"));
+                    }
+                    confidence = Some(c);
+                }
+                None => break,
             }
         }
 
@@ -448,23 +464,42 @@ impl<'a> CsonParser<'a> {
         }
 
         self.skip_whitespace_and_comments();
-        let mut confidence = None;
-        if self.pos < self.input.len() && self.input[self.pos..].starts_with('~') {
-            // Check if it's a semantic key start, not confidence
-            let after_tilde = &self.input[self.pos + 1..];
-            if !after_tilde.starts_with('"') && !after_tilde.trim_start().starts_with('"') {
-                self.pos += 1;
-                let end = self.input[self.pos..]
-                    .find(|c: char| c.is_whitespace() || c == ',' || c == '}' || c == ']')
-                    .unwrap_or(self.input.len() - self.pos);
-                if let Ok(c) = self.input[self.pos..self.pos + end].parse::<f64>() {
-                    confidence = Some(c);
-                    self.pos += end;
-                }
-            }
-        }
+        let confidence = self.parse_confidence()?;
 
         Ok((value, confidence))
+    }
+
+    /// Consume `~<number>` if present, returning None when the next token is not
+    /// a confidence.
+    ///
+    /// A `~` also begins a semantic KEY (§2.2), so `~"intent"` must be left alone
+    /// for the next pair. Only a `~` followed by something other than a quote is
+    /// a confidence.
+    fn parse_confidence(&mut self) -> Result<Option<f64>, String> {
+        if self.pos >= self.input.len() || !self.input[self.pos..].starts_with('~') {
+            return Ok(None);
+        }
+        let after_tilde = &self.input[self.pos + 1..];
+        if after_tilde.starts_with('"') || after_tilde.trim_start().starts_with('"') {
+            return Ok(None); // a semantic key beginning the next pair
+        }
+        let at = self.pos;
+        self.pos += 1;
+        let end = self.input[self.pos..]
+            .find(|c: char| c.is_whitespace() || c == ',' || c == '}' || c == ']')
+            .unwrap_or(self.input.len() - self.pos);
+        let text = &self.input[self.pos..self.pos + end];
+        let Ok(c) = text.parse::<f64>() else {
+            self.pos = at;
+            return Ok(None);
+        };
+        self.pos += end;
+        // SPEC §7: a parser must reject a confidence outside [0.0, 1.0]. This
+        // check was missing entirely -- `~1.5` parsed and projected happily.
+        if !(0.0..=1.0).contains(&c) {
+            return Err(self.error(&format!("Confidence {c} outside [0.0, 1.0]")));
+        }
+        Ok(Some(c))
     }
 }
 

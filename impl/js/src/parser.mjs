@@ -191,7 +191,11 @@ function parseNode(c, pending) {
   for (;;) {
     const save = c.i;
     c.skipWs(false);
-    if (c.peek() === "~" && conf === null) {
+    if (c.peek() === "~") {
+      // A node carries at most one confidence (SPEC §3). Without this the second
+      // `~` falls through to key parsing and reports a misleading "semantic key"
+      // error.
+      if (conf !== null) throw c.err("Duplicate confidence on a node");
       const at = c.i;
       c.i++;
       c.skipWs(false);
