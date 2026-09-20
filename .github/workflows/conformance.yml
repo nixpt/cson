@@ -1,0 +1,79 @@
+# SPEC §8: "Parsers must not diverge from the corpus."
+#
+# With four implementations that is no longer enforceable by remembering to run
+# four test suites. Each job runs one implementation against the corpus; the
+# final job asserts they all produce the SAME projection, which is the stronger
+# claim and the one the corpus actually exists to guarantee.
+name: conformance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    name: rust (reference)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test --all
+
+  python:
+    name: python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      # both suites are dependency-free and exit non-zero on failure
+      - run: python3 impl/python/tests/test_conformance.py
+      - run: python3 impl/python/tests/test_spec.py
+
+  javascript:
+    name: javascript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: node impl/js/test/conformance.mjs
+      - run: node impl/js/test/spec.mjs
+
+  go:
+    name: go
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: "1.21" }
+      - run: go vet ./...
+        working-directory: impl/go
+      - run: go test ./...
+        working-directory: impl/go
+
+  cross-check:
+    name: all implementations agree
+    runs-on: ubuntu-latest
+    needs: [rust, python, javascript, go]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - uses: actions/setup-go@v5
+        with: { go-version: "1.21" }
+      # The valuable assertion: not "each passes its own tests" but "all four
+      # project identically for every vector". Numbers are normalised first --
+      # SPEC §2.3 makes them IEEE-754 doubles, but Python renders 8080.0 where
+      # Go and JS render 8080, and a naive string diff reports false divergence.
+      - run: node impl/js/test/cross-check.mjs
+        env:
+          # fail loudly if a toolchain did not install, rather than silently
+          # comparing fewer implementations than intended
+          CSON_CROSSCHECK_REQUIRE: python,go

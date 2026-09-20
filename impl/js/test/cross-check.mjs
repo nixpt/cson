@@ -33,6 +33,28 @@ const have = (cmd, args) => {
 const pyAvailable = have("python3", ["-c", "import sys"]);
 const goAvailable = have("go", ["version"]);
 
+// Skipping a missing toolchain is right locally and WRONG in CI: a failed Go
+// install would make this pass while comparing nothing. CSON_CROSSCHECK_REQUIRE
+// names the implementations that must be present, so CI fails loudly instead of
+// quietly narrowing its own coverage.
+const AVAILABLE = { python: pyAvailable, go: goAvailable };
+const required = (process.env.CSON_CROSSCHECK_REQUIRE || "")
+  .split(",").map((s) => s.trim()).filter(Boolean);
+
+// An unknown name must be an error, not a silent no-op: `REQUIRE=rust` quietly
+// requiring nothing is the same blind spot one level up.
+const unknown = required.filter((r) => !(r in AVAILABLE));
+if (unknown.length) {
+  console.error(`unknown implementation(s) in CSON_CROSSCHECK_REQUIRE: ${unknown.join(", ")}`);
+  console.error(`known: ${Object.keys(AVAILABLE).join(", ")} (rust is the corpus baseline, always compared)`);
+  process.exit(2);
+}
+const missing = required.filter((r) => !AVAILABLE[r]);
+if (missing.length) {
+  console.error(`required implementation(s) unavailable: ${missing.join(", ")}`);
+  process.exit(2);
+}
+
 let ok = 0;
 const failures = [];
 

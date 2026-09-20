@@ -40,11 +40,15 @@ Every open item below represents a planned task or issue. See
 - [x] **CSON-7** — JavaScript/TypeScript parser: `impl/js/`, dependency-free, no build
   step, hand-written `.d.ts`. 16/16 conformance + 36/36 spec checks. Also added
   `test/cross-check.mjs`, which asserts all three implementations project identically.
-- [ ] **CSON-8** — Go parser under `impl/go/`.
+- [x] **CSON-8** — Go parser: `impl/go/`, stdlib only. 16/16 conformance + 14 spec
+  tests (30 subtests). `Confidence *float64` so absent stays distinguishable from
+  `~1.0`; `*Object` preserves key order for a future printer.
 - [ ] **CSON-9** — a CSON printer. Every implementation parses only today, so §6's
   "reconstructable from its projection plus the printer" is unverifiable.
-- [ ] **CSON-10** — CI running *every* implementation against the corpus on one
-  checkout, so a parser cannot silently drift.
+- [x] **CSON-10** — `.github/workflows/conformance.yml`: a job per implementation
+  plus a `cross-check` job asserting all four project identically.
+  `CSON_CROSSCHECK_REQUIRE` makes a missing toolchain a hard failure instead of a
+  silently narrower comparison.
 
 ## Non-goals
 
